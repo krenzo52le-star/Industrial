@@ -24,13 +24,22 @@ jobs:
         with:
           gradle-version: 4.9
 
-      - name: Build
+      - name: Build (tries several Forge 1.12.2 versions)
         working-directory: industria
-        run: gradle setupCIWorkspace build --no-daemon
+        run: |
+          for v in 14.23.5.2860 14.23.5.2847 14.23.5.2838 14.23.5.2768; do
+            echo "=== Trying Forge 1.12.2-$v"
+            sed -i -E "s/1\.12\.2-14\.23\.5\.[0-9]+/1.12.2-$v/" build.gradle
+            if gradle setupCIWorkspace build --no-daemon; then
+              echo "=== Build OK with Forge $v"
+              exit 0
+            fi
+          done
+          echo "All Forge versions failed"
+          exit 1
 
       - name: Upload jar
         uses: actions/upload-artifact@v4
         with:
           name: industria-jar
           path: industria/build/libs/*.jar
-          
